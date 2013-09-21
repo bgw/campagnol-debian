@@ -1,0 +1,6 @@
+# Defaults for campagnol-rendezvous initscript
+# sourced by /etc/init.d/campagnol-rendezvous
+
+# Additional options that are passed to the Daemon.
+# MAX_CLIENTS=100 # Setting the value to 0 means unlimited (not recommended).
+# PORT=57888

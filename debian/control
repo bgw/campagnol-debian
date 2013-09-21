@@ -1,0 +1,32 @@
+Source: campagnol
+Section: net
+Priority: extra
+Maintainer: Benjamin Woodruff <benjaminwoodruff@ufl.edu>
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, pkg-config, automake1.11,
+               autoconf (>= 2.61), libssl-dev (>= 0.9.8), dh-autoreconf,
+               texinfo
+Standards-Version: 3.9.4
+Homepage: http://campagnol.sourceforge.net/
+Vcs-Svn: svn://svn.code.sf.net/p/campagnol/code/tags/0.3.4
+Vcs-Browser: http://git.debian.org/?p=collab-maint/campagnol.git;a=summary
+
+Package: campagnol
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libssl1.0.0
+Description: Distributed VPN using UDP hole punching
+ A distributed IP-based VPN software able to open new connections through NATs
+ or firewalls without any configuration. It uses UDP for the transport layer
+ and utilizes tunneling and encryption (with DTLS) and the UDP hole punching NAT
+ traversal technique. The established connections are P2P.
+
+Package: campagnol-rendezvous
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libssl1.0.0
+Description: Distributed VPN using UDP hole punching (server)
+ A distributed IP-based VPN software able to open new connections through NATs
+ or firewalls without any configuration. It uses UDP for the transport layer
+ and utilizes tunneling and encryption (with DTLS) and the UDP hole punching NAT
+ traversal technique. The established connections are P2P.
+ .
+ This is the server component. It should be installed and run on only one
+ machine in your network with a public IP address.

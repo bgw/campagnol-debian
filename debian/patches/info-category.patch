@@ -1,0 +1,17 @@
+Add a direntry for campagnol
+--- a/doc/campagnol.texi
++++ b/doc/campagnol.texi
+@@ -5,6 +5,13 @@
+ @comment  @setchapternewpage odd
+ @c %**end of header
+ 
++@ifinfo
++@dircategory Networking tools
++@direntry
++* campagnol: (campagnol).       A distributed UDP hole-punching vpn.
++@end direntry
++@end ifinfo
++
+ @include version.texi
+ 
+ @copying

@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_OPTIONS
+export ACLOCAL=aclocal-1.11
+export AUTOMAKE=automake-1.11
+
+
+%:
+	dh $@  --with autotools-dev --with autoreconf
+
+override_dh_auto_build:
+	dh_auto_build
+	cd doc; makeinfo campagnol.texi
+
+override_dh_clean:
+	dh_clean
+	rm -f doc/campagnol.info
+
+override_dh_compress:
+	dh_compress -X.sh

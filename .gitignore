@@ -1,0 +1,13 @@
+# we re-run autoconf, so ignore the resulting changes
+Makefile.in
+aclocal.m4
+compile
+configure
+depcomp
+install-sh
+mdate-sh
+missing
+texinfo.tex
+
+# we rebuild the *.info file
+doc/campagnol.info

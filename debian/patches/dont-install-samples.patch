@@ -1,0 +1,31 @@
+We shouldn't install sample files with automake; campagnol was putting them in
+the wrong place, and that's what `dh_installdocs` is for anyways!
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -105,26 +105,6 @@
+ endif
+ 
+ 
+-# samples/ installation
+-# ---------------------
+-
+-if BUILD_CLIENT
+-nobase_dist_pkgdata_DATA = \
+-	samples/sample_certs/cert1/key.pem \
+-	samples/sample_certs/cert1/certificate.pem \
+-	samples/sample_certs/cert2/key.pem \
+-	samples/sample_certs/cert2/certificate.pem \
+-	samples/sample_certs/cert_revoked/key.pem \
+-	samples/sample_certs/cert_revoked/certificate.pem \
+-	samples/sample_certs/cacert.pem \
+-	samples/sample_certs/crl.pem \
+-	samples/sample_certs/client1.conf \
+-	samples/sample_certs/client2.conf \
+-	samples/sample_certs/README \
+-	samples/ca_wrap.sh samples/README.ca_wrap
+-endif
+-
+-
+ # campagnol_rdv
+ # -------------
+ 

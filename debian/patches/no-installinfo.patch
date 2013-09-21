@@ -1,0 +1,11 @@
+Don't run `install-info`, as that causes lintian to error with
+`package-contains-info-dir-file`.
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,5 +1,5 @@
+ ACLOCAL_AMFLAGS = -I m4 --install
+-AUTOMAKE_OPTIONS = subdir-objects
++AUTOMAKE_OPTIONS = subdir-objects no-installinfo
+ 
+ 
+ # Misc and initialization

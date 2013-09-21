@@ -1,0 +1,6 @@
+# Defaults for campagnol initscript
+# sourced by /etc/init.d/campagnol
+
+# Additional options that are passed to the Daemon.
+# MLOCK="true" # lock the process’s pages into RAM by calling the mlockall
+               # system call if available
