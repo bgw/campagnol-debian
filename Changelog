@@ -1,0 +1,115 @@
+v 0.3.4	
+	Add support for NetBSD.
+
+	client:
+	* MTU: Make sure that the packet size is coherent with the MTU during
+	the handshake.
+	* DTLS: Fix the handling of the receiving timeout. The required
+	version of OpenSSL is now 0.9.8m.
+	* cygwin: The inteface parameter in the configuration file can now be used
+	with an interface name as specified in Network Connections. 
+
+v 0.3.3
+	The client and rdv server have been ported to Cygwin.
+	Add a texinfo manual.
+
+	client:
+	* bss_fifo: add a drop-tail mode in addition to the default blocking
+	write.
+	* communication, dtls_utils, peer: New design. Connections are now
+	handled by a new thread from creation to shutdown. This is less tricky
+	but cost the creation of a new thread as soon as a connection is
+	asked.
+	* configure.ac: Update the required version of OpenSSL to >=0.9.8j in
+	order to have a decent DTLS implementation.
+	* MTU: Allow the receiving of packets larger than the VPN MTU.
+	* configure.ac: Add some optional warnings (with --enable-warnings)
+	and a macro to check the CFLAGS.
+	* communication: Fix some potential packet loss when the client
+	re-registers with the RDV. The connection with the RDV server is now
+	handled in a dedicated thread.
+	* net_socket.c: Check the length of the interface name.
+	* ca_wrap.sh: Add a command to list the generated certificates.
+	* campagnol.c: Add a command line option to mlock the process.
+	* configuration.c: Reduce the default size of the queues from 50
+	packets to 20.
+	* configuration: Replace the parser with a more readable and
+	maintainable parser. The new parser supports parameters with multiple
+	values and preserves the order of the definitions. The [UP] and [DOWN]
+	sections have been replaced with a single [COMMANDS] section.
+	* daemon: --verbose and --debug are now also used with --daemon to
+	adjust the log verbosity.
+	* tun_device: fix the local UDP port in the up and down commands.
+
+	rdv server:
+	* configuration: Set the default maximum number of clients to 100.
+	* daemon: --verbose and --debug are now also used with --daemon to
+	adjust the log verbosity.
+
+v 0.3.2:
+	client:
+	Read the DTLS data (key and certificates) only once at startup.
+	Add an option to give a directory with the root certificates (instead of
+	giving a certificate chain file).
+	Add the possibility to define which commands are run when the TUN
+	device is opened or closed.
+	The configuration files now accepts line continuation.
+	Better CRL handling. Possibility to reload the CRL/key/certificate on
+	signals.
+	Correct the bad handling of timed-out connections or failed hole
+	punching.
+	Finer locking granularity.
+	Linux: add options to set the TUN/TAP device TX queue.
+
+	rdv server:
+	Replace the java implementation by a new one in C.
+
+v 0.3.1:
+	client:
+	Support rate limiting for the whole client and per connection.
+	Give the PID file in argument instead of in the config file.
+	OpenBSD port.
+	Add an option to force the local address sent to the RDV (it may be
+	usefull with multiple layers of NAT).
+	Send keepalive messages on the connections. Add an option to control
+	the interval between keepalive messages.
+	Man page for the configuration file.
+
+	rdv server:
+	Add an option to set the maximum number of registered clients.
+	Regularly clean dead clients and try to reduce memory consumption.
+	Add a Makefile to ease building and installing.
+	Man page.
+
+v 0.3:
+	client:
+	Now using the autotools.
+	FreeBSD port. Various cleanings in order to prepare the FreeBSD port and
+	more robust code.
+	New and faster SSL queues.
+	Configuration: new INI-like format with a less buggy file parser. Now
+	use a default configuration file (/etc/campagnol.conf).
+	Better checking of loopback interfaces when searching the local
+	IP and use getifaddrs when available.
+	Fix some memory leaks with pthreads and OpenSSL.
+	Write the PID into /var/run/campagnol.pid or another location.
+	Add a receiving timeout so that openssl can detect a packet loss
+	during a handshake and resend.
+	Add the possibility to send the local IP and port to the RDV server.
+
+	rdv server:
+	Move the file into the net.sourceforge.campagnol package.
+	Small cleanings.
+	Better ANT build file.
+	When two peers are behind the same NAT and their local addresses are
+	kown, use the local adresses intead of the public addresses.
+
+v 0.2:
+	client: use syslog to log important messages when the client is
+	started as a daemon. Add sample configuration files and certificates.
+	A few bugfixes, most of them being unlikely to happen. Enhanced
+	Makefile.
+	rdv server: adjust the behavior of the verbose and debug parameters.
+
+v 0.1:
+	First release.

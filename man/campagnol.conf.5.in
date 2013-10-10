@@ -1,0 +1,478 @@
+.\" Begin/end an indented schematic
+.de BDRAWING
+.  ft C
+.  in +7n
+.  nf
+..
+.de EDRAWING
+.  fi
+.  in -7n
+.  ft
+..
+.\" write a parameter name, its argument and default value
+.de PARAMETER
+\fB\\$1\fR = \fI\\$2\fR
+.  ie !"\\$3"" \{\
+\fIoptional\fR, default: \fI\\$3\fR
+.  \}
+.  el \{\
+\fImandatory\fR
+.  \}
+..
+.\" campagnol.conf path
+.ds filename @sysconfdir@/campagnol.conf
+.TH CAMPAGNOL.CONF 5 "November 16, 2009" "@version@"
+.SH NAME
+campagnol.conf - Campagnol VPN client configuration file
+.SH SYNOPSIS
+.I \*[filename]
+.SH DESCRIPTION
+.BR campagnol (8)
+reads its configuration datas from
+.I \*[filename]
+(or another file specified in the command line).
+.PP
+This file has an INI-like syntax with extensions.
+.SH SYNTAX
+Section name are written between square brackets ([ and ]). All the parameters
+written after a section declaration belong to that section. The remaining text
+on the line after the declaration is ignored. The white spaces around the
+section names are ignored. The name are case sensitive.
+.PP
+Comments start with a \[oq];\[cq] or a \[oq]#\[cq] and continue to the end of
+the line.
+.PP
+Parameters are defined with the syntax \[oq]name = value\[cq]. The white spaces
+around the name and the value are stripped. The name are case sensitive.
+.PP
+Values may be quoted between double quotation marks. A quoted value can expand
+over multiple lines. A \[oq]\\\[cq] at the end of the line is treated as a line
+continuation. It is removed and the parser continue to read the value with the
+next line. Several quoted or unquoted values on the same line are
+concatenated.
+.PP
+Special characters in the section names, parameters and values can be escaped
+with \[oq]\\\[cq]. The C escape sequences are accepted (\\, \\n, \\xhh...) in
+addition to \\#, \\;, \\[, \\] and \\=.
+.PP
+.ft C
+.nf
+[SOME_SECTION]
+  param        = value        # comment
+  other_param  = a few words
+  quoted_value = "some chars \\t\\"\\#  "
+
+
+[MULTILINE 1]
+# The following definitions are equivalent
+a = "aze rty uio"
+b = aze " rty " uio
+c = "aze"\\
+    " rty "\\
+    "uio"
+d = aze\\
+    " rty "\\
+    uio
+e = "aze\\
+ rty \\
+uio"
+
+
+[MULTILINE 2]
+# The following definitions are equivalent
+a = "aze\\n  rty\\n uio"
+b = "aze
+  rty
+ uio"
+c = "aze\\n"\\
+    "  rty\\n"\\
+    " uio"
+.fi
+.ft
+.PP
+Inside a section, the syntax
+.I ${param}
+can be used to reference another value (param) from the same section. To protect
+a \[oq]${..}\[cq] sequence from being expanded, it can be escaped with
+\[oq]$${..}\[cq].
+.PP
+.ft C
+.nf
+[SECURITY]
+basedir = "/etc/campagnol_certs"
+certificate = ${basedir}/cert.pem  # expands to
+                                   # "/etc/campagnol_certs/cert.pem"
+key = ${basedir}/key.pem           # expands to
+                                   # "/etc/campagnol_certs/key.pem"
+.fi
+.ft
+.PP
+The configuration file defines the following sections:
+.RS
+.TP 13n
+.B [NETWORK]
+The public network-related options like the rendezvous server address or the
+MTU.
+.TP
+.B [VPN]
+This section defines the IP address and netmask used on the VPN.
+.TP
+.B [SECURITY]
+All the DTLS-related parameters.
+.TP
+.B [CLIENT]
+This section is used to adjust the client's behavior.
+.TP
+.B [COMMANDS]
+This section defines the commands executed when the TUN device is opened or
+closed.
+.RE
+.SH PARAMETERS
+This is a list of all the available parameters, with their default value if they
+are optional and their expected format.
+.\" *** NETWORK ***
+.SS [NETWORK] section
+.TP 15n
+.PARAMETER local_host "[IP address or hostname]" "search for a non local IP"
+.IP
+This parameter set the local IP address used by campagnol.
+If it is left undefined, the local IP address will firstly be searched with the 
+.B interface
+parameter. If
+.B interface
+is not set, the IP address will be the first non local IP found. Setting this
+parameter to \[lq]0.0.0.0\[rq]
+will work but it is not compatible with the
+.B use_local_addr
+option.
+.TP
+.PARAMETER local_port "[port number]" "no port binding"
+.IP
+Bind the local UDP socket to this port number.
+.TP
+.PARAMETER server_host "[IP address or hostname]"
+.IP
+The rendezvous server hostname or IP address.
+.TP
+.PARAMETER server_port "[port number]"
+.IP
+The rendezvous server port.
+.TP
+.PARAMETER tun_mtu integer 1419
+.IP
+This parameter set the MTU of the TUN device. This value must be the same on
+every clients.
+.IP
+It may be interesting to change the MTU of the tun device if you are running
+campagnol on a network with a unusual MTU. The default value is the highest
+value which should yield packets smaller than 1500 bytes (the usual MTU for
+ethernet) whichever cipher algorithm is used. The optimal value depends on the
+total overhead of campagnol. This is described in the source file
+.IR "include/communication.h" .
+.TP
+.PARAMETER interface "[a network interface name]" "no interface binding"
+.IP
+This parameter is used to find the local IP address to use if the 
+.B local_host
+parameter is not set. On cygwin, the intefaces' names are as specified in the
+Network Connections settings panel.
+.IP
+LINUX ONLY: if this parameter is defined, the UDP socket
+is also bound to this interface.
+.TP
+.PARAMETER use_local_addr "[yes/no]" "yes"
+.IP
+This parameter allows the client to publish its local IP and UDP port. It's
+useful if this client and others clients of the VPN are behind a common NAT:
+.IP
+.BDRAWING
+[peer A] ---|   |
+            |NAT|---(net)-- [RDV]
+[peer B] ---|   |
+.EDRAWING
+.IP
+In this configuration and if this parameter is enabled, the two peers will use
+their local IP and port to reach each other. Otherwise they will use their
+public address (as with the other clients of the VPN).
+.IP
+If peer A send a packet to peer B using its public address and port, the common
+NAT needs to do UDP hairpin translation which is not a widely implemented
+feature. By using the local address, the NAT doesn't need to do hairpin
+translation so leaving this option to the default value is probably what most
+users want.
+.IP
+If the VPN configuration involves peers behind multiple level of NAT, see the
+next parameter
+.BR override_local_addr .
+Disable this option only if you know what you
+are doing!
+.TP
+.PARAMETER override_local_addr "\[lq]IP port\[rq]" "not enabled"
+.IP
+This option is used to define the local IP that will be published to the
+rendezvous server (if 
+.B use_local_addr
+is enabled). The format of the value is the IP address (or a hostname) and the
+port number, separated by spaces.
+.IP
+This option is useful when peers are behind multiple level of NATs:
+.IP
+.BDRAWING
+[peer A] ---|NAT_A|---|   |
+                      |NAT|---(net)-- [RDV]
+        [peer B] -----|   |
+.EDRAWING
+.IP
+In this case, the two peers are behind a common NAT but A is also behind another
+NAT. If A and B use their local IP to open a connection
+.RB ( use_local_addr
+enable), it will fail. If they use their public IP
+.RB ( use_local_addr
+disabled)
+it will work only if the common NAT does UDP hairpin translation.
+.IP
+With this parameter, you can send a fake local address to the rendezvous server
+instead of the real one. So another way to connect the two peers is to define a
+static port forwarding for A on NAT_A and to use
+.B override_local_addr
+to publish
+its intermediate IP address and port on NAT_A. When B tries to open a new
+connection with A, it will now use its address on NAT_A.
+.TP
+.PARAMETER tun_device "[Name of the TUN interface]" "none"
+.IP
+CYGWIN - The name of the TUN/TAP adapter to use (as it appears in Windows'
+"Network Connections" panel). If this is not defined, the first adapter found
+is used.
+.IP
+LINUX - Give this name to the TUN interface. If the parameter is not defined,
+the default name is similar to "tun0" (the number is incremented as needed).
+.TP
+.PARAMETER tap_id "[Name of the OpenVPN's TAP driver]" "tap0901"
+.IP
+CYGWIN ONLY - This parameters defines the name of the TAP driver. This is used
+to search for TAP adapters. The Cygwin port of Campagnol was developed and
+tested with the \[lq]tap0901\[rq] driver but other versions may also work.
+.\" *** VPN ***
+.SS [VPN] section
+.TP 15n
+.PARAMETER vpn_ip "[IP address]"
+.IP
+The IP address for the VPN.
+.TP
+.PARAMETER network "[netmask in CIDR notation]"
+.IP
+The subnetwork for the VPN. This value must be the same for all peers. It's
+given using the CIDR notation, for example \[lq]10.0.0.0/24\[rq].
+.\" *** SECURITY ***
+.SS [SECURITY] section
+.TP 15n
+.PARAMETER certificate path
+.IP
+The PEM file containing the client's X.509 certificate.
+.TP
+.PARAMETER key path
+.IP
+The PEM file containing the client's private key.
+.TP
+.PARAMETER ca_certificates path none
+.IP
+The PEM file containing the root certificates chain in PEM format. This file can
+contain several CA certificates. Also see the next parameter
+.BR ca_certificates_dir .
+.TP
+.PARAMETER ca_certificates_dir path none
+.IP
+A directory containing the root certificates in PEM format. This directory must
+be prepared with the \fBc_rehash\fR OpenSSL's utility. See
+.BR SSL_CTX_load_verify_locations (3)
+for a description of the format. At least one of
+.BR ca_certificates " and " ca_certificates_dir
+must be defined. If both are defined, 
+.BR ca_certificates
+is searched first.
+.TP
+.PARAMETER crl_file path none
+.IP
+A PEM file containing a certificate revocation list (CRL). When a new connection
+is opened, the remote peer's certificate is checked against this CRL.
+.TP
+.PARAMETER verify_depth integer "9 (OpenSSL's default)"
+.IP
+This parameter defines the maximum depth for the certificate chain verification.
+.TP
+.PARAMETER cipher_list "[OpenSSL's cipher list]" "OpenSSL's default"
+.IP
+The OpenSSL ciphers lists to use. If this value is defined, then it must be the
+same for every clients of the VPN, or at least the values must be compatible.
+.BR openssl-ciphers (1)
+explains the syntax for this parameter and how to determine a cipherlist.
+.\" *** CLIENT ***
+.SS [CLIENT] section
+.TP 15n
+.PARAMETER fifo_size integer 20
+.IP
+The internal queue length of Campagnol. The client uses one transmit and one
+receive queue.
+.TP
+.PARAMETER txqueue integer 500
+.IP
+LINUX ONLY - The length of the TX queue of the TUN/TAP device. If the parameter
+is not set, the default value of the driver is used. This sets the same value
+than the \fBtxqueuelen\fR parameter of ifconfig. Set this parameter to a smaller
+value if running with a slow ethernet connection or with severe rate limiting.
+.TP
+.PARAMETER tun_one_queue "[yes/no]" "no"
+.IP
+LINUX ONLY - Set the TUN/TAP driver in single queue mode. When running in single
+queue mode, the TUN/TAP driver drops the packets by itself when its internal
+queue is full instead of rescheduling the packets. The size of the internal
+queue is also set with the \fBtxqueue\fR parameter. This mode is required to
+work around a bug in pre-2.6.11 kernels. It may also help on slow hardware or
+with slow connection speed since it will de facto reduce the maximum transmit
+queue length.
+.TP
+.PARAMETER client_max_rate float "not enabled"
+.IP
+This option allows to limit the outgoing traffic for the whole client. The value
+is in kilobytes/seconds. If this parameter is commented out or set to 0, it
+is disabled.
+.TP
+.PARAMETER connection_max_rate float "not enabled"
+.IP
+This option allows to limit the outgoing traffic for each connection to other
+peers. The value is in kilobytes/seconds. If this parameter is commented out or
+set to 0, it is disabled.
+.TP
+.PARAMETER timeout integer "120 seconds"
+.IP
+This set the inactivity timeout before closing a session. The value is given in
+seconds. It's better to ensure that all the clients share the same value for
+this option.
+.TP
+.PARAMETER keepalive integer "10 seconds"
+.IP
+This set the interval the client waits before sending a keepalive message to
+another client when the connection is inactive. This is required to maintain the
+contexts of the involved NATs and firewalls.
+.TP
+.PARAMETER max_clients integer 100
+.IP
+The maximum number of simultaneously opened connections with other clients.
+.\" *** COMMANDS ***
+.SS [COMMANDS] section
+This section defines the programs that are launched when the TUN device is
+opened or closed. It can be used to configure the TUN device with ifconfig, 
+set the MTU, add a route, open some port on the firewall...
+.PP
+Campagnol can also execute some platform-dependent default commands to setup the
+interface, its MTU and add a route.
+.TP 15n
+.PARAMETER default_up "[yes/no]" "yes"
+.IP
+Use the default commands when the TUN device is opened instead of the commands
+defined in this section.
+.TP
+.PARAMETER default_down "[yes/no]" "yes"
+.IP
+Use the default commands when the TUN device is closed instead of the commands
+defined in this section.
+.TP
+.PARAMETER up "shell command" "platform-dependent"
+.IP
+A shell command executed when the TUN device is opened and \fBdefault_up\fR is
+false. This parameter can be defined multiple times.
+.IP
+Inside the command, the following special variables are available:
+.RS
+.TP 8n
+.B %D
+the TUN device
+.TP
+.B %V
+the VPN IP, as defined in the
+.BR [VPN]
+section.
+.TP
+.B %M
+the MTU of the TUN device, as defined in the
+.BR [NETWORK]
+section
+.TP
+.B %I
+the local IP
+.TP
+.B %P
+the local UDP port
+.TP
+.B %N
+the netmask of the VPN, as defined in the
+.BR [VPN]
+section.
+.TP
+.B %n
+the netmask of the VPN in dot-decimal notation.
+.TP
+.B %%
+the \[oq]%\[cq] character
+.RE
+.TP
+.PARAMETER down "shell command" "platform-dependent"
+.IP
+A shell command executed when the TUN device is closed and \fBdefault_down\fR
+is false. This parameter can be defined multiple times.
+.IP
+The same spacial variables are available.
+.PP
+This is the default up commands for Linux:
+.IP
+.ft C
+.nf
+up = "ifconfig %D %V mtu %M up"
+up = "ip route replace %N via %V || route add -net %N gw %V"
+.fi
+.ft
+.PP
+This is the default up commands for FreeBSD and NetBSD:
+.IP
+.ft C
+.nf
+up = "ifconfig %D inet %V %V mtu %M up"
+up = "route add -net %N %V"
+.fi
+.ft
+.PP
+This is the default up commands for OpenBSD (note that you do not need to
+manually set the MTU with ifconfig for OpenBSD):
+.IP
+.ft C
+.nf
+up = "ifconfig %D inet %V %V up"
+up = "route add -net %N %V"
+.fi
+.ft
+.PP
+This is the default up command for Cygwin (note that the MTU is already set by
+Campagnol by changing its value in the registry):
+.IP
+.ft C
+.nf
+up = "netsh interface ip set address name=%D static %V %n none"
+.fi
+.ft
+.PP
+There is no default down command on Linux, OpenBSD and Cygwin.
+.PP
+This is the default down command for FreeBSD and NetBSD:
+.IP
+.ft C
+.nf
+down = "ifconfig %D destroy"
+.fi
+.ft
+.SH SEE ALSO
+.BR campagnol (8),
+.BR campagnol_rdv (8),
+.BR openssl-ciphers (1)
+.SH AUTHORS
+Florent Bondoux <fbondoux@users.sourceforge.net>
